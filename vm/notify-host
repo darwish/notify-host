@@ -1,0 +1,48 @@
+#!/bin/bash
+
+usage() {
+    echo "Usage: $0 -m <message> [-p <title>] [-t <info|warn|error>]" >&2
+    exit 1
+}
+
+url=${NOTIFY_HOST_URL:-"10.0.2.2:8888"}
+
+prompt="VM Says:"
+type="info"
+
+while getopts "m:p:t:h" opt; do
+    case $opt in
+        m)
+            msg=$OPTARG
+            ;;
+        p)
+            prompt=$OPTARG
+            ;;
+        t)
+            type=$OPTARG
+            ;;
+        h)
+            usage
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            usage
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            usage
+            ;;
+    esac
+done
+
+if [[ -z "$msg" ]]; then
+    echo "Must provide a message using -m flag." >&2
+    usage
+fi
+
+args=()
+if [[ -n "$msg" ]];    then args+=(--data-urlencode "msg=$msg");       fi
+if [[ -n "$prompt" ]]; then args+=(--data-urlencode "prompt=$prompt"); fi
+if [[ -n "$type" ]];   then args+=(--data-urlencode "type=$type");     fi
+
+curl -G "${args[@]}" "$url" &
